@@ -1,14 +1,15 @@
 #include <iostream>
 #include <string>
 #include <sstream>
-#include <cctype>		//isalpha
-#include <stdlib.h>
+//#include <cctype>		//isalpha
+// #include <stdlib.h>
 using namespace std;
 
 
 //for 10 ppl, supposed to enter number of pancakes each person eats
 //then display which person ate mostpancakes down to which person ate
 //least pancakes
+
 struct Tracker
 {
 	private:
@@ -48,22 +49,12 @@ void switchtracker(Tracker &temp, Tracker arr[], int pos1, int pos2)
 	return;
 } // switch()
 
-void quicksort(Tracker arr[], int piv, int last)
+void sortloop(Tracker arr[], Tracker &temp, int &fOpen, int last, 
+			  int piv, int &lastC, int &arraySorted)
 {
-	Tracker temp;
-	int arraySorted = 0; //0 = true. can be set to false during for
-
-	if(last - piv <= 1)	//list is done sorting for subarray size 1
-		return;
-
-	int fOpen = piv + 1, lastC = -1; //first opened is 1 after piv
-									//last closed hasnt happened yet
-	for(int i = fOpen; i < last; i++)				//3, 4, 1, ...
-		if(arr[i].getval() <= arr[piv].getval()) 	//i=2, piv=0, ([2]=1 < [0]=3)
-		{						//fOpen=1, lastC=-1
-			// temp = arr[i];	//[1]=4 -> 1, [2]=4
-			// arr[i] = arr[fOpen];	
-			// arr[fOpen] = temp;	//3, 1, 4, ...
+	for(int i = fOpen; i < last; i++)				
+		if(arr[i].getval() <= arr[piv].getval()) 	
+		{						
 			switchtracker(temp, arr, i, fOpen);
 			lastC = fOpen;		//[1] becomes lastC, lastC = 1
 			fOpen = lastC + 1;  //fOpen becomes 2
@@ -76,12 +67,23 @@ void quicksort(Tracker arr[], int piv, int last)
 
 		else
 			continue;
+}
+
+void quicksort(Tracker arr[], int piv, int last)
+{
+	Tracker temp;
+	int arraySorted = 0; //0 = true. can be set to false during for
+
+	if(last - piv <= 1)	//list is done sorting for subarray size 1
+		return;
+
+	int fOpen = piv + 1, lastC = -1; //first opened is 1 after piv
+									//last closed hasnt happened yet
 	
+	sortloop(arr, temp, fOpen, last, piv, lastC, arraySorted);
 
 	if(arraySorted == 0)	//subarray sorted
 		return;
-//4321 --> 1324 --> 
-	//must also deal w lastC not changed
 
 	if(lastC == -1)	//nothing closed, fOpen is still piv+1
 	{	//then we should keep piv in same place...
@@ -99,48 +101,78 @@ void quicksort(Tracker arr[], int piv, int last)
 } // quicksort()
 
 
-void display(Tracker ar[])
+void display(Tracker ar[], int length)
 {
-	for(int i = 10-1; i >= 0; i--)
+	for(int i = length - 1; i >= 0; i--)
 		cout <<"Eater " << ar[i].getid() <<" ate "<< ar[i].getval() 
 			<< " pancakes." << endl;
 	return;
 }	// display()
 
 
+int loopInput(string &input, int length)
+{
+	int i;
+	for(i = 0; i < length; i++)
+		if(!isdigit(input[i]))
+			break;
+	return i;
+}
+
+void prompt(string &input, int i)
+{
+	cout << "Enter number of pancakes eater " << i + 1 
+			 << " ate: ";
+			 						//getline must use string type, no char arr hahah
+	getline(cin, input);		//get usr input
+}
+
+
+void checkInput(string &input, int i)
+{
+	int length = input.length();
+	int check = loopInput(input, length);
+	while(length < 1 || check != length ) //broke b4 end of string
+	{
+		cout << "Invalid number. Must enter at least one digit and only digits." <<endl;
+		prompt(input, i);
+		length = input.length();
+		check = loopInput(input, length);		
+
+	}
+}
+
+
 int main(int argc, char** argv)
 {
-	int val;
-	Tracker ar[10];
+	int val, eaters;
+
+	//Tracker ar[10];
 	Tracker temp;
 	string input;
 
-	//ask 10 eaters how many eaten
-	for(int i = 0; i < 10; i++)
+	//ask how many eaters
+	cout << "Enter the number of eaters that participated in the contest: ";
+	getline(cin, input);
+	stringstream ss1(input);
+	ss1 >> eaters;
+
+	Tracker* ar = new Tracker[eaters];
+
+	//use new to allocate for Tracker ar[]
+
+	for(int i = 0; i < eaters; i++)
 	{
-		cout << "Enter number of pancakes eater " << i + 1 
-			 << " ate: ";
-			 						//getline must use string type, no char arr hahah
-		getline(cin, input);		//get usr input
-		stringstream ss(input);	//translate char to int
-		ss >> val;
+		prompt(input, i);
+		checkInput(input, i);
+		stringstream ss2(input);	//translate char to int
+		ss2 >> val;
 		Tracker track(i + 1, val);
 		ar[i] = track; 
 	}
 
-	// for(int i = 0; i < 10; i++)
-	// 	cout << ar[i].getval() <<", ";
-	// cout << endl; 
-
-	quicksort(ar, 0, 10);	//sort by largest num pancakes (val)
-	display(ar);			//display results
+	quicksort(ar, 0, eaters);	//sort by largest num pancakes (val)
+	display(ar, eaters);			//display results
 	cout <<"-----------------------------"<<endl;
 	return 0;
 }
-
-//test for quicksort
-//7, 3, 5, 1008201
-//5,2,1,5,7,8,0,0,0,34
-//9,8,7,6,5,4,3,2,1,0
-//	087654321 9
-//  
